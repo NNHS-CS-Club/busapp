@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="notification_list">
+        <item>Bus Changes</item>
+        <item>Bus is HERE</item>
+        <item>Bus is LOADING</item>
+        <item>Bus is GONE</item>
+    </string-array>
+
+    <string-array name="notification_list_values">
+        <item>CHANGES</item>
+        <item>HERE</item>
+        <item>LOADING</item>
+        <item>GONE</item>
+    </string-array>
+</resources>

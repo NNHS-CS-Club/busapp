@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:layout="@layout/settings_category"
+        android:title="General">
+
+        <ListPreference
+            android:dialogTitle="Change Bus Number"
+            android:key="new_bus_number"
+            android:title="Change Bus Number" />
+
+        <MultiSelectListPreference
+            android:defaultValue="@array/notification_list"
+            android:dialogTitle="Notification Preferences"
+            android:entries="@array/notification_list"
+            android:entryValues="@array/notification_list_values"
+            android:key="notification_preferences"
+            android:title="Notifications" />
+
+    </PreferenceCategory>
+</PreferenceScreen>
