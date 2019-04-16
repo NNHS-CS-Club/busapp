@@ -14,9 +14,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import java.util.Arrays;
+import com.google.firebase.FirebaseApp;
+
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
@@ -89,8 +89,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             Set<String> selections = localPrefs.getStringSet("notification_preferences", null);
             String[] selected = selections.toArray(new String[]{});
-            sendNotification(selected);
-
 
             Toolbar toolbar = findViewById(R.id.toolbar);
             toolbar.setTitle(userBusNumber);
@@ -105,18 +103,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new UserBusFragment()).commit();
             navigationView.setCheckedItem(R.id.nav_user_bus);
         }
-    }
-
-    public void sendNotification(String[] selected) {
-        int index = Arrays.asList(Buses.getBuses()).indexOf(userBusNumber);
-        String status = Arrays.asList(Buses.getStatuses()).get(index);
-        List<String> list = Arrays.asList(selected);
-
-        /** This is for notifications
-        if (list.contains(status)) {
-            ;
-        }
-         */
     }
 
     @Override
