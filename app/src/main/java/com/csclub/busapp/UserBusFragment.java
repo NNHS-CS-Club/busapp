@@ -3,8 +3,6 @@ package com.csclub.busapp;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -16,7 +14,6 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
@@ -32,14 +29,12 @@ import java.util.TreeMap;
 
 public class UserBusFragment extends Fragment {
 
-
-    private TextView textView;
     private String userBusNumber;
     private View view;
     private DatabaseReference myRef;
-    private Display display;
     private Toolbar toolbar;
     private NavigationView navigationView;
+    private int height;
 
     @Nullable
     @Override
@@ -53,31 +48,17 @@ public class UserBusFragment extends Fragment {
 
         toolbar = getActivity().findViewById(R.id.toolbar);
 
-        display = getActivity().getWindowManager().getDefaultDisplay();
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        height = size.y;
 
-        textView = (TextView) view.findViewById(R.id.user_bus);
+        final TextView textView = view.findViewById(R.id.user_bus);
         SharedPreferences localPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         userBusNumber = localPrefs.getString("new_bus_number", "0");
 
         textView.setText(userBusNumber);
 
-        getBusInfo(new FirebaseCallback() {
-            @Override
-            public void onCallback(TextView textView2) {
-                Point size = new Point();
-                display.getSize(size);
-                int height = size.y;
-
-                textView.setHeight(height / 2);
-                textView2.setPadding(0, height / 3, 0, 0);
-                textView2.setHeight(height / 2);
-            }
-        });
-        return view;
-    }
-
-    private void getBusInfo(final FirebaseCallback fireBaseCallback) {
-        // Read from the database
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -97,12 +78,16 @@ public class UserBusFragment extends Fragment {
                 }
 
                 int index = -1;
-                String status = "";
+                String status;
 
+                // If the bus number is in the buses array then set the status and bus number
+                // If it's a bus change the catch statement will run to display the bus change
+                // as well
                 try {
                     index = Arrays.asList(buses).indexOf(userBusNumber);
                     status = Arrays.asList(statuses).get(index);
                     TextView t = view.findViewById(R.id.user_bus);
+                    t.setHeight(height / 2);
                     t.setText(userBusNumber);
                     toolbar.setTitle(userBusNumber);
                     navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle(userBusNumber);
@@ -112,6 +97,7 @@ public class UserBusFragment extends Fragment {
                         if (error.get(i).contains(userBusNumber)) {
                             index = i;
                             TextView t = view.findViewById(R.id.user_bus);
+                            t.setHeight(height / 2);
                             t.setText(error.get(i));
                             toolbar.setTitle(error.get(i));
                             navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle(error.get(i));
@@ -121,9 +107,12 @@ public class UserBusFragment extends Fragment {
                 }
 
                 status = Arrays.asList(statuses).get(index);
-                TextView textView2 = (TextView) view.findViewById(R.id.bus_status);
+                TextView textView2 = view.findViewById(R.id.bus_status);
+                textView2.setPadding(0, height / 3, 0, 0);
+                textView2.setHeight(height / 2);
                 textView2.setText(status);
 
+                // Change color of the status
                 if (status.equals("HERE")) {
                     textView2.setTextColor(Color.parseColor("#4285F4"));
                 } else if (status.equals("LOADING")) {
@@ -133,8 +122,6 @@ public class UserBusFragment extends Fragment {
                 } else {
                     textView2.setTextColor(Color.parseColor("#000000"));
                 }
-
-                fireBaseCallback.onCallback(textView2);
             }
 
             @Override
@@ -144,9 +131,7 @@ public class UserBusFragment extends Fragment {
         };
 
         myRef.addValueEventListener(valueEventListener);
-    }
 
-    private interface FirebaseCallback {
-        void onCallback(TextView textView2);
+        return view;
     }
 }

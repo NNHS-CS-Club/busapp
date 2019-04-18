@@ -3,26 +3,18 @@ package com.csclub.busapp;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.InputType;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout.LayoutParams;
-import android.widget.TableRow;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,38 +22,45 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
+    // A reference to the Firebase Database that is connected to this app
     private DatabaseReference myRef;
-    private Button btn;
+    // An array of all the bus numbers
     private String[] buses;
-    private boolean notNull = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Finds the height of the user's display
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display. getSize(size);
         int height = size.y;
 
+        // Sets the layout parameters and margins of the image
         ImageView img = findViewById(R.id.image);
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         params.setMargins(0, (int) (height * 0.15), 0, (int) (height * 0.15));
         img.setLayoutParams(params);
 
-        btn = (Button) findViewById(R.id.btn);
+        // Adds a click listener to the button. When it is clicked, the method
+        // onClick(View v) will be called
+        Button btn = findViewById(R.id.btn);
         btn.setOnClickListener(this);
 
+        // Gets a reference to the Firebase Database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         myRef = database.getReference("/");
 
+        // When the data has been read from the database, call setInfo(String[] a)
+        // This callback function ensures that the data is read before calling
+        // setInfo() and not after
         getBusInfo(new FirebaseCallback() {
             @Override
             public void onCallback(String[] a) {
@@ -71,10 +70,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public void setInfo(String[] a) {
+        // Now the global buses variable contains all the bus number
         this.buses = a;
-        this.notNull = true;
     }
 
+    // The interface that provides a template for what methods to implement
+    // when using a callback function for reading in data from Firebase
     private interface FirebaseCallback {
         void onCallback(String[] a);
     }
@@ -114,32 +115,39 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        if (notNull) {
+        // Ensures that the bus numbers have been loading into the buses variable
+        if (buses != null) {
+            // Builds a new AlertDialog that will show all the bus numbers so the user
+            // can select theirs
             AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
 
-            final String[] entries = buses;
-            final int current = 0;
-
             builder.setTitle("Select Your Bus Number");
-            builder.setSingleChoiceItems(entries, -1, new DialogInterface.OnClickListener() {
+            builder.setSingleChoiceItems(buses, -1, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {}
             });
 
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
+                    // Shows all the items in the bus number list
                     ListView lw = ((AlertDialog)dialog).getListView();
 
                     try {
                         Object checkedItem = lw.getAdapter().getItem(lw.getCheckedItemPosition());
 
+                        // Stores the user's selected bus number locally so it can be remembered
+                        // even when they close the app and open it later
                         SharedPreferences localPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                         localPrefs.edit().putString("new_bus_number", checkedItem.toString()).commit();
 
+                        // Changes the activity to the main one because the user has finished
+                        // the login process
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(intent);
 
-                    } catch (ArrayIndexOutOfBoundsException e) {}
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        // Catches if the user pressed 'OK' without selecting a bus number
+                    }
                 }
             });
 

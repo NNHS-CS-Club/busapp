@@ -6,7 +6,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
-import android.preference.ListPreference;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -27,17 +26,18 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class AllBusesFragment extends Fragment {
 
-    private TableLayout tbl;
+    private TableLayout table;
     private Display display;
     private DatabaseReference myRef;
+    // Ensures that the table cells are only built the first time the data is read
+    // from the database, and every other time only the text is changing
     private boolean seen = false;
-    private FragmentActivity fa;
+    private FragmentActivity fragmentActivity;
 
     @Nullable
     @Override
@@ -49,12 +49,12 @@ public class AllBusesFragment extends Fragment {
 
         display = getActivity().getWindowManager().getDefaultDisplay();
 
-        fa = getActivity();
+        fragmentActivity = getActivity();
 
         Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
         toolbar.setTitle("All Buses");
 
-        tbl = (TableLayout) view.findViewById(R.id.table);
+        table = view.findViewById(R.id.table);
 
         // Read from the database
         ValueEventListener valueEventListener = new ValueEventListener() {
@@ -75,6 +75,8 @@ public class AllBusesFragment extends Fragment {
                     count++;
                 }
 
+                // Create the rows and columns if seen is false, otherwise change the text
+                // of the existing rows and columns
                 if (!(seen)) {
                     Point size = new Point();
                     display.getSize(size);
@@ -84,6 +86,7 @@ public class AllBusesFragment extends Fragment {
                     for (int i = 0; i < buses.length; i++) {
                         TableRow newRow = new TableRow(getContext());
 
+                        // newText1 is the TextView that displas the bus number
                         TextView newText1 = new TextView(getContext());
                         newText1.setText(buses[i]);
                         newText1.setId(i * 2);
@@ -92,8 +95,11 @@ public class AllBusesFragment extends Fragment {
                         newText1.setTypeface(newText1.getTypeface(), Typeface.BOLD);
                         newText1.setLayoutParams(new TableRow.LayoutParams(width / 2, height / 9));
                         newText1.setGravity(Gravity.CENTER);
+
+                        // Draws the border between cells to make it easier to read
                         newText1.setBackgroundResource(R.drawable.ic_table_border);
 
+                        // newText12 is the TextView that displas the bus status
                         TextView newText2 = new TextView(getContext());
                         newText2.setId(i * 2 + 1);
                         newText2.setText(statuses[i]);
@@ -113,19 +119,18 @@ public class AllBusesFragment extends Fragment {
                             newText2.setTextColor(Color.parseColor("#000000"));
                         }
 
-
                         newRow.addView(newText1);
                         newRow.addView(newText2);
-                        tbl.addView(newRow);
+                        table.addView(newRow);
                     }
                     setInfo();
                 } else {
                     for (int i = 0; i < buses.length; i++) {
-                        final TextView t1 = fa.findViewById(i * 2);
+                        final TextView t1 = fragmentActivity.findViewById(i * 2);
                         String previous1 = (String) t1.getText();
                         t1.setText(buses[i]);
 
-                        final TextView t2 = fa.findViewById(i * 2 + 1);
+                        final TextView t2 = fragmentActivity.findViewById(i * 2 + 1);
                         String previous2 = (String) t2.getText();
                         t2.setText(statuses[i]);
 
@@ -153,6 +158,8 @@ public class AllBusesFragment extends Fragment {
                             }
                         };
 
+                        // Flashes the bus numbers that change so the user can identiy
+                        // the changes
                         if (!(buses[i].equals(previous1))) {
                             ColorDrawable[] color1 = {new ColorDrawable(Color.parseColor("#FBFBFB")), new ColorDrawable(Color.parseColor("#909090"))};
                             TransitionDrawable trans1 = new TransitionDrawable(color1);
@@ -167,6 +174,8 @@ public class AllBusesFragment extends Fragment {
                             getView().postDelayed(delayedTask, 300);
                         }
 
+                        // Flashes the bus statuses that change so the user can identiy
+                        // the changes
                         if (!(statuses[i].equals(previous2))) {
                             ColorDrawable[] color1 = {new ColorDrawable(Color.parseColor("#FBFBFB")), new ColorDrawable(Color.parseColor("#909090"))};
                             TransitionDrawable trans1 = new TransitionDrawable(color1);
