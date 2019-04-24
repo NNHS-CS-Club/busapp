@@ -3,13 +3,10 @@ package com.csclub.busapp;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Display;
 import android.view.Gravity;
@@ -19,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.content.Context;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -26,169 +24,77 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.Map;
-import java.util.TreeMap;
-
 public class AllBusesFragment extends Fragment {
 
+    private static int width;
+    private static int height;
+
+    private Context context;
+    private Toolbar toolbar;
     private TableLayout table;
-    private Display display;
-    private DatabaseReference myRef;
-    // Ensures that the table cells are only built the first time the data is read
-    // from the database, and every other time only the text is changing
-    private boolean seen = false;
-    private FragmentActivity fragmentActivity;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_all_buses, container, false);
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        myRef = database.getReference("/");
-
-        display = getActivity().getWindowManager().getDefaultDisplay();
-
-        fragmentActivity = getActivity();
-
-        Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
-        toolbar.setTitle("All Buses");
-
+        context = getContext();
+        toolbar = getActivity().findViewById(R.id.toolbar);
         table = view.findViewById(R.id.table);
 
-        // Read from the database
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        width = size.x;
+        height = size.y;
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("/buses/");
+
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-                Map<String, String> temp = (Map<String, String>) dataSnapshot.getValue();
-                Map<String, String> map = new TreeMap<>(temp);
-
-                String[] buses = new String[map.size()];
-                String[] statuses = new String[map.size()];
+                int dataLength = (int) (dataSnapshot.getChildrenCount());
+                String[] buses = new String[dataLength];
+                String[] statuses = new String[dataLength];
 
                 int count = 0;
-                for (String key : ((TreeMap<String, String>) map).navigableKeySet()) {
-                    buses[count] = key;
-                    statuses[count] = map.get(key);
+                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
+                    String busNumber = postSnapshot.getKey();
+                    String change = postSnapshot.child("Change").getValue().toString();
+                    if (!(change.equals(""))) {
+                        busNumber += "=" + change;
+                    }
+                    buses[count] = busNumber;
+                    statuses[count] = postSnapshot.child("Status").getValue().toString();
                     count++;
                 }
 
-                // Create the rows and columns if seen is false, otherwise change the text
-                // of the existing rows and columns
-                if (!(seen)) {
-                    Point size = new Point();
-                    display.getSize(size);
-                    int width = size.x;
-                    int height = size.y;
+                toolbar.setTitle("All Buses");
 
-                    for (int i = 0; i < buses.length; i++) {
-                        TableRow newRow = new TableRow(getContext());
+                try {
+                    for (int i = 0; i < dataLength; i++) {
+                        final TextView busTextView = getActivity().findViewById(i * 2);
+                        busTextView.setText(buses[i]);
 
-                        // newText1 is the TextView that displas the bus number
-                        TextView newText1 = new TextView(getContext());
-                        newText1.setText(buses[i]);
-                        newText1.setId(i * 2);
-                        newText1.setTextSize(25);
-                        newText1.setTextColor(Color.BLACK);
-                        newText1.setTypeface(newText1.getTypeface(), Typeface.BOLD);
-                        newText1.setLayoutParams(new TableRow.LayoutParams(width / 2, height / 9));
-                        newText1.setGravity(Gravity.CENTER);
+                        final TextView statusTextView = getActivity().findViewById(i * 2 + 1);
+                        statusTextView.setText(statuses[i]);
 
-                        // Draws the border between cells to make it easier to read
-                        newText1.setBackgroundResource(R.drawable.ic_table_border);
-
-                        // newText12 is the TextView that displas the bus status
-                        TextView newText2 = new TextView(getContext());
-                        newText2.setId(i * 2 + 1);
-                        newText2.setText(statuses[i]);
-                        newText2.setTextSize(25);
-                        newText2.setTypeface(newText2.getTypeface(), Typeface.BOLD);
-                        newText2.setBackgroundResource(R.drawable.ic_table_border);
-                        newText2.setLayoutParams(new TableRow.LayoutParams(width / 2, height / 9));
-                        newText2.setGravity(Gravity.CENTER);
-
-                        if (statuses[i].equals("HERE")) {
-                            newText2.setTextColor(Color.parseColor("#4285F4"));
-                        } else if (statuses[i].equals("LOADING")) {
-                            newText2.setTextColor(Color.parseColor("#0F9D58"));
-                        } else if (statuses[i].equals("GONE")) {
-                            newText2.setTextColor(Color.parseColor("#DB4437"));
-                        } else {
-                            newText2.setTextColor(Color.parseColor("#000000"));
-                        }
-
-                        newRow.addView(newText1);
-                        newRow.addView(newText2);
-                        table.addView(newRow);
+                        setStatusColor(statusTextView, statuses[i]);
                     }
-                    setInfo();
-                } else {
+                } catch (Exception e){
+                    table.removeAllViews();
+
+                    TableRow header = new TableRow(context);
+                    header.addView(makeTableCell("Bus", -1, context));
+                    header.addView(makeTableCell("Status", -2, context));
+                    table.addView(header);
+
                     for (int i = 0; i < buses.length; i++) {
-                        final TextView t1 = fragmentActivity.findViewById(i * 2);
-                        String previous1 = (String) t1.getText();
-                        t1.setText(buses[i]);
-
-                        final TextView t2 = fragmentActivity.findViewById(i * 2 + 1);
-                        String previous2 = (String) t2.getText();
-                        t2.setText(statuses[i]);
-
-                        if (statuses[i].equals("HERE")) {
-                            t2.setTextColor(Color.parseColor("#4285F4"));
-                        } else if (statuses[i].equals("LOADING")) {
-                            t2.setTextColor(Color.parseColor("#0F9D58"));
-                        } else if (statuses[i].equals("GONE")) {
-                            t2.setTextColor(Color.parseColor("#DB4437"));
-                        } else {
-                            t2.setTextColor(Color.parseColor("#000000"));
-                        }
-
-                        Runnable delayedTask = new Runnable() {
-                            @Override
-                            public void run() {
-                                t1.setBackgroundResource(R.drawable.ic_table_border);
-                            }
-                        };
-
-                        Runnable delayedTask2 = new Runnable() {
-                            @Override
-                            public void run() {
-                                t2.setBackgroundResource(R.drawable.ic_table_border);
-                            }
-                        };
-
-                        // Flashes the bus numbers that change so the user can identiy
-                        // the changes
-                        if (!(buses[i].equals(previous1))) {
-                            ColorDrawable[] color1 = {new ColorDrawable(Color.parseColor("#FBFBFB")), new ColorDrawable(Color.parseColor("#909090"))};
-                            TransitionDrawable trans1 = new TransitionDrawable(color1);
-                            ColorDrawable[] color2 = {new ColorDrawable(Color.parseColor("#909090")), new ColorDrawable(Color.parseColor("#FBFBFB"))};
-                            TransitionDrawable trans2 = new TransitionDrawable(color2);
-
-                            trans1.startTransition(150);
-                            t1.setBackground(trans1);
-                            trans2.startTransition(150);
-                            t1.setBackground(trans2);
-
-                            getView().postDelayed(delayedTask, 300);
-                        }
-
-                        // Flashes the bus statuses that change so the user can identiy
-                        // the changes
-                        if (!(statuses[i].equals(previous2))) {
-                            ColorDrawable[] color1 = {new ColorDrawable(Color.parseColor("#FBFBFB")), new ColorDrawable(Color.parseColor("#909090"))};
-                            TransitionDrawable trans1 = new TransitionDrawable(color1);
-                            ColorDrawable[] color2 = {new ColorDrawable(Color.parseColor("#909090")), new ColorDrawable(Color.parseColor("#FBFBFB"))};
-                            TransitionDrawable trans2 = new TransitionDrawable(color2);
-
-                            trans1.startTransition(150);
-                            t2.setBackground(trans1);
-                            trans2.startTransition(150);
-                            t2.setBackground(trans2);
-
-                            getView().postDelayed(delayedTask2, 300);
-                        }
+                        TableRow tableRow = new TableRow(context);
+                        tableRow.addView(makeTableCell(buses[i], i * 2, context));
+                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, context));
+                        table.addView(tableRow);
                     }
                 }
             }
@@ -200,11 +106,33 @@ public class AllBusesFragment extends Fragment {
         };
 
         myRef.addValueEventListener(valueEventListener);
-
         return view;
     }
 
-    public void setInfo() {
-        this.seen = true;
+    private static TextView makeTableCell(String text, int id, Context context) {
+        TextView textView = new TextView(context);
+        textView.setId(id);
+        textView.setText(text);
+        textView.setTextSize(25);
+        textView.setTypeface(textView.getTypeface(), Typeface.BOLD);
+        textView.setLayoutParams(new TableRow.LayoutParams(width / 2, height / 9));
+        textView.setGravity(Gravity.CENTER);
+        textView.setBackgroundResource(R.drawable.ic_table_border);
+
+        setStatusColor(textView, text);
+
+        return textView;
+    }
+
+    private static void setStatusColor(TextView statusTextView, String status) {
+        if (status.equals("HERE")) {
+            statusTextView.setTextColor(Color.parseColor("#4285F4"));
+        } else if (status.equals("LOADING")) {
+            statusTextView.setTextColor(Color.parseColor("#0F9D58"));
+        } else if (status.equals("GONE")) {
+            statusTextView.setTextColor(Color.parseColor("#DB4437"));
+        } else {
+            statusTextView.setTextColor(Color.parseColor("#000000"));
+        }
     }
 }

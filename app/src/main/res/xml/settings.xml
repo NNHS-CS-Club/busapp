@@ -7,7 +7,7 @@
 
         <ListPreference
             android:dialogTitle="Change Bus Number"
-            android:key="new_bus_number"
+            android:key="userBusNumber"
             android:title="Change Bus Number" />
 
         <MultiSelectListPreference
@@ -15,7 +15,7 @@
             android:dialogTitle="Notification Preferences"
             android:entries="@array/notification_list"
             android:entryValues="@array/notification_list_values"
-            android:key="notification_preferences"
+            android:key="notificationPreferences"
             android:title="Notifications" />
 
     </PreferenceCategory>

@@ -21,18 +21,6 @@
                     android:icon="@drawable/ic_settings"
                     android:title="@string/drawer_settings" />
             </group>
-
-            <!-- Creates a Logout Option
-            <group
-            android:id="@+id/menu_bottom"
-            android:checkableBehavior="single">
-            <item
-                android:id="@+id/nav_logout"
-                android:icon="@drawable/ic_logout"
-                android:title="@string/drawer_logout" />
-            </group>
-            -->
-
         </menu>
     </item>
 </menu>
