@@ -6,33 +6,34 @@
     android:background="@color/colorWhite">
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@id/image"
-        android:gravity="center"
+        android:layout_centerHorizontal="true"
         android:text="@string/app_name"
         android:textColor="@color/colorBlack"
-        android:textSize="35sp"
+        android:textSize="36sp"
         android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_below="@id/title"
+        android:layout_centerHorizontal="true"
         app:srcCompat="@drawable/logo" />
 
     <Button
         android:id="@+id/btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/image"
+        android:layout_below="@id/image"
         android:layout_centerHorizontal="true"
         android:background="@color/colorBlack"
         android:padding="16dp"
         android:text="Select Your Bus Number"
         android:textColor="@color/colorWhite"
-        android:textSize="18dp"
+        android:textSize="18sp"
         android:textStyle="bold" />
 
 </RelativeLayout>

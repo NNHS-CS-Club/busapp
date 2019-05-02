@@ -14,7 +14,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
+import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -37,10 +39,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         display. getSize(size);
         int height = size.y;
 
-        ImageView img = findViewById(R.id.image);
-        LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, (int) (height * 0.15), 0, (int) (height * 0.15));
-        img.setLayoutParams(params);
+        TextView title = findViewById(R.id.title);
+        RelativeLayout.LayoutParams titleParams = (RelativeLayout.LayoutParams) title.getLayoutParams();
+        titleParams.setMargins(0, height / 5, 0, 0);
+
+        ImageView image = findViewById(R.id.image);
+        RelativeLayout.LayoutParams imageParams = (RelativeLayout.LayoutParams) image.getLayoutParams();
+        imageParams.setMargins(0, height / 25, 0, height / 25);
+        image.setScaleX((float) (height) / (height + 500));
+        image.setScaleY((float) (height) / (height + 500));
 
         Button btn = findViewById(R.id.btn);
         btn.setOnClickListener(this);
@@ -129,5 +136,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             AlertDialog dialog = builder.create();
             dialog.show();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
     }
 }
