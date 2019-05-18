@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:layout="@layout/settings_category"
+        android:title="General">
+
+        <ListPreference
+            android:dialogTitle="Change Bus Number"
+            android:key="userBusNumber"
+            android:title="Change Bus Number" />
+
+    </PreferenceCategory>
+</PreferenceScreen>
