@@ -49,7 +49,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     if (key.contains(userBusNumber)) {
                         String s = localPrefs.getString(value, "-1");
                         if (!(s.contains("Bus " + userBusNumber) && s.contains(value))) {
-                            String text = "Bus " + userBusNumber + " is " + value;
+                            String text = "";
+                            if (key.contains("=")) {
+                                String busChange = key.substring(key.indexOf("=") + 1);
+                                text = "Bus " + userBusNumber + " (" + busChange + ")" + " is " + value;
+                            } else {
+                                text = "Bus " + userBusNumber + " is " + value;
+                            }
                             sendNotification("Status Change", text, CHANNEL_ID_1, 0);
                             localPrefs.edit().putString(value, text).apply();
                         }

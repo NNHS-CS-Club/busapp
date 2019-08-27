@@ -7,6 +7,8 @@ exports.pushNotifications = functions.database.ref('/buses/').onUpdate((change, 
     var topic = 'pushNotifications';
     var jsonData = {};
 
+
+
     for (var key in after) {
         if (after.hasOwnProperty(key)) {
             var busChange = "";
@@ -30,7 +32,7 @@ exports.pushNotifications = functions.database.ref('/buses/').onUpdate((change, 
 
     var payload = {
         data: jsonData,
-        topic: topic
+        topic: 'pushNotifications'
     };
 
     admin.messaging().send(payload).then(() => console.log("Sent Data")).catch((error) => console.log("Error"));
