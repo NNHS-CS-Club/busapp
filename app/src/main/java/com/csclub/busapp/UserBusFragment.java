@@ -37,6 +37,7 @@ public class UserBusFragment extends Fragment {
         view = inflater.inflate(R.layout.fragment_user_bus, container, false);
         navigationView = getActivity().findViewById(R.id.nav_view);
         toolbar = getActivity().findViewById(R.id.toolbar);
+        toolbar.setTitle("Bus App");
 
         Display display = getActivity().getWindowManager().getDefaultDisplay();
         Point size = new Point();
@@ -52,6 +53,7 @@ public class UserBusFragment extends Fragment {
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                toolbar.setTitle("Bus App");
                 TextView busTextView = view.findViewById(R.id.user_bus);
                 busTextView.setHeight(height / 2);
 
@@ -65,11 +67,9 @@ public class UserBusFragment extends Fragment {
                         String change = postSnapshot.child("Change").getValue().toString();
                         if (change.equals("")) {
                             busTextView.setText("Bus " + key);
-                            toolbar.setTitle("Bus " + userBusNumber);
                             navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle("Bus " + userBusNumber);
                         } else {
                             busTextView.setText("Bus " + key + "=" + change);
-                            toolbar.setTitle("Bus " + userBusNumber + "=" + change);
                             navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle("Bus " + userBusNumber + "=" + change);
                         }
                         String status = postSnapshot.child("Status").getValue().toString();

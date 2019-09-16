@@ -2,8 +2,11 @@ package com.csclub.busapp;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -30,48 +33,61 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static final String CHANNEL_ID_1 = "Status Change";
     private static final String CHANNEL_ID_2 = "Bus Change";
 
+    public boolean isConnectingToInternet(){
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED || connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        createNotificationChannels();
+        if (isConnectingToInternet()) {
+            createNotificationChannels();
 
-        FirebaseMessaging.getInstance().subscribeToTopic("pushNotifications");
-        localPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String userBusNumber = localPrefs.getString("userBusNumber", "-1");
+            FirebaseMessaging.getInstance().subscribeToTopic("pushNotifications");
+            localPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+            String userBusNumber = localPrefs.getString("userBusNumber", "-1");
 
-        if (userBusNumber.equals("-1")) {
-            Set<String> preferences = new HashSet<String>();
-            preferences.add("CHANGES");
-            preferences.add("HERE");
-            preferences.add("LOADING");
-            preferences.add("GONE");
-            localPrefs.edit().putStringSet("notificationPreferences", preferences).apply();
+            if (userBusNumber.equals("-1")) {
+                Set<String> preferences = new HashSet<String>();
+                preferences.add("CHANGES");
+                preferences.add("HERE");
+                preferences.add("LOADING");
+                preferences.add("GONE");
+                localPrefs.edit().putStringSet("notificationPreferences", preferences).apply();
 
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivity(intent);
-        } else {
-            setContentView(R.layout.activity_main);
+                Intent intent = new Intent(this, LoginActivity.class);
+                startActivity(intent);
+            } else {
+                setContentView(R.layout.activity_main);
 
-            drawer = findViewById(R.id.drawer_layout);
-            navigationView = findViewById(R.id.nav_view);
-            navigationView.setNavigationItemSelectedListener(this);
+                drawer = findViewById(R.id.drawer_layout);
+                navigationView = findViewById(R.id.nav_view);
+                navigationView.setNavigationItemSelectedListener(this);
 
-            Toolbar toolbar = findViewById(R.id.toolbar);
-            toolbar.setTitle(userBusNumber);
-            setSupportActionBar(toolbar);
+                Toolbar toolbar = findViewById(R.id.toolbar);
+                toolbar.setTitle("Bus App");
+                setSupportActionBar(toolbar);
 
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-            drawer.addDrawerListener(toggle);
+                ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                drawer.addDrawerListener(toggle);
 
-            navigationView.getMenu().getItem(0).setTitle("Naperville North High School");
-            navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle(userBusNumber);
+                navigationView.getMenu().getItem(0).setTitle("Naperville North High School");
+                navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle(userBusNumber);
 
-            toggle.syncState();
-            if (savedInstanceState == null) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new UserBusFragment()).commit();
-                navigationView.setCheckedItem(R.id.nav_user_bus);
+                toggle.syncState();
+                if (savedInstanceState == null) {
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new UserBusFragment()).commit();
+                    navigationView.setCheckedItem(R.id.nav_user_bus);
+                }
             }
+        } else {
+            setContentView(R.layout.activity_no_connection);
         }
     }
 
