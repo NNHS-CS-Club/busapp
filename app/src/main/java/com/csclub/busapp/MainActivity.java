@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 drawer.addDrawerListener(toggle);
 
                 navigationView.getMenu().getItem(0).setTitle("Naperville North High School");
-                navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle(userBusNumber);
 
                 toggle.syncState();
                 if (savedInstanceState == null) {

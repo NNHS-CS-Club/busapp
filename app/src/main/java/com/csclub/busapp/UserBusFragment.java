@@ -67,10 +67,8 @@ public class UserBusFragment extends Fragment {
                         String change = postSnapshot.child("Change").getValue().toString();
                         if (change.equals("")) {
                             busTextView.setText("Bus " + key);
-                            navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle("Bus " + userBusNumber);
                         } else {
                             busTextView.setText("Bus " + key + "=" + change);
-                            navigationView.getMenu().findItem(R.id.nav_user_bus).setTitle("Bus " + userBusNumber + "=" + change);
                         }
                         String status = postSnapshot.child("Status").getValue().toString();
                         statusTextView.setText(status);
