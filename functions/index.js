@@ -11,8 +11,12 @@ exports.pushNotifications = functions.database.ref('/buses/').onUpdate((change, 
 
     for (var key in after) {
         if (after.hasOwnProperty(key)) {
+            var busNumber = "";
             var busChange = "";
             var status = "";
+            if (after[key].hasOwnProperty("Bus")) {
+                busNumber = String(after[key]["Bus"]);
+            }
             if (after[key].hasOwnProperty("Change")) {
                 busChange = String(after[key]["Change"]);
             }
@@ -22,9 +26,9 @@ exports.pushNotifications = functions.database.ref('/buses/').onUpdate((change, 
 
             var bus = "";
             if (busChange === "") {
-                bus = key;
+                bus = busNumber;
             } else {
-                bus = key + "=" + busChange;
+                bus = busNumber + "=" + busChange;
             }
             jsonData[bus] = status;
         }

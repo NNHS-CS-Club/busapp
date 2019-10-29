@@ -24,6 +24,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+
 public class AllBusesFragment extends Fragment {
 
     private static int width;
@@ -55,19 +59,48 @@ public class AllBusesFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 int dataLength = (int) (dataSnapshot.getChildrenCount());
+
                 String[] buses = new String[dataLength];
                 String[] statuses = new String[dataLength];
+                HashMap<String, ArrayList<String>> values = new HashMap<>();
+                ArrayList<Integer> normalBuses = new ArrayList<>();
+                ArrayList<String> specialBuses = new ArrayList<>();
+
+                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
+                    String bus = postSnapshot.child("Bus").getValue().toString();
+                    try {
+                        Integer intBus = Integer.parseInt(bus);
+                        normalBuses.add(intBus);
+                    } catch (NumberFormatException e) {
+                        specialBuses.add(bus);
+                    }
+                    ArrayList<String> value = new ArrayList<>();
+                    value.add(postSnapshot.child("Status").getValue().toString());
+                    value.add(postSnapshot.child("Change").getValue().toString());
+                    values.put(bus, value);
+                }
+
+                Collections.sort(normalBuses);
+                Collections.sort(specialBuses);
 
                 int count = 0;
-                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
-                    String busNumber = postSnapshot.getKey();
-                    String change = postSnapshot.child("Change").getValue().toString();
+                for (Integer i : normalBuses) {
+                    buses[count] = i.toString();
+                    count += 1;
+                }
+                for (String s : specialBuses) {
+                    buses[count] = s;
+                    count += 1;
+                }
+
+                for (int i = 0; i < dataLength; i++) {
+                    String busNumber = buses[i];
+                    String change = values.get(busNumber).get(1);
+                    statuses[i] = values.get(busNumber).get(0);
                     if (!(change.equals(""))) {
                         busNumber += "=" + change;
                     }
-                    buses[count] = busNumber;
-                    statuses[count] = postSnapshot.child("Status").getValue().toString();
-                    count++;
+                    buses[i] = busNumber;
                 }
 
                 toolbar.setTitle("All Buses");

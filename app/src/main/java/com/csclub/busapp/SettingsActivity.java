@@ -14,6 +14,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class SettingsActivity extends PreferenceActivity {
 
     @Override
@@ -43,13 +46,32 @@ public class SettingsActivity extends PreferenceActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     int dataLength = (int) (dataSnapshot.getChildrenCount());
+
                     String[] buses = new String[dataLength];
+                    ArrayList<Integer> normalBuses = new ArrayList<>();
+                    ArrayList<String> specialBuses = new ArrayList<>();
+
+                    for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
+                        String bus = postSnapshot.child("Bus").getValue().toString();
+                        try {
+                            Integer intBus = Integer.parseInt(bus);
+                            normalBuses.add(intBus);
+                        } catch (NumberFormatException e) {
+                            specialBuses.add(bus);
+                        }
+                    }
+
+                    Collections.sort(normalBuses);
+                    Collections.sort(specialBuses);
 
                     int count = 0;
-                    for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
-                        String key = postSnapshot.getKey();
-                        buses[count] = key;
-                        count++;
+                    for (Integer i : normalBuses) {
+                        buses[count] = i.toString();
+                        count += 1;
+                    }
+                    for (String s : specialBuses) {
+                        buses[count] = s;
+                        count += 1;
                     }
 
                     ListPreference listPreference = (ListPreference) findPreference("userBusNumber");

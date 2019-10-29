@@ -62,13 +62,13 @@ public class UserBusFragment extends Fragment {
                 statusTextView.setHeight(height / 2);
 
                 for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
-                    String key = postSnapshot.getKey();
-                    if (userBusNumber.equals(key)) {
+                    String bus = postSnapshot.child("Bus").getValue().toString();
+                    if (userBusNumber.equals(bus)) {
                         String change = postSnapshot.child("Change").getValue().toString();
                         if (change.equals("")) {
-                            busTextView.setText("Bus " + key);
+                            busTextView.setText("Bus " + bus);
                         } else {
-                            busTextView.setText("Bus " + key + "=" + change);
+                            busTextView.setText("Bus " + bus + "=" + change);
                         }
                         String status = postSnapshot.child("Status").getValue().toString();
                         statusTextView.setText(status);

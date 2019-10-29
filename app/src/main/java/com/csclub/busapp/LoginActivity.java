@@ -15,7 +15,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
@@ -23,6 +22,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -76,13 +78,32 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 int dataLength = (int) (dataSnapshot.getChildrenCount());
+
                 String[] buses = new String[dataLength];
+                ArrayList<Integer> normalBuses = new ArrayList<>();
+                ArrayList<String> specialBuses = new ArrayList<>();
+
+                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
+                    String bus = postSnapshot.child("Bus").getValue().toString();
+                    try {
+                        Integer intBus = Integer.parseInt(bus);
+                        normalBuses.add(intBus);
+                    } catch (NumberFormatException e) {
+                        specialBuses.add(bus);
+                    }
+                }
+
+                Collections.sort(normalBuses);
+                Collections.sort(specialBuses);
 
                 int count = 0;
-                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
-                    String key = postSnapshot.getKey();
-                    buses[count] = key;
-                    count++;
+                for (Integer i : normalBuses) {
+                    buses[count] = i.toString();
+                    count += 1;
+                }
+                for (String s : specialBuses) {
+                    buses[count] = s;
+                    count += 1;
                 }
 
                 fireBaseCallback.onCallback(buses);
@@ -120,7 +141,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(intent);
 
-                    } catch (ArrayIndexOutOfBoundsException e) {
+                    } catch (Exception e) {
 
                     }
                 }
