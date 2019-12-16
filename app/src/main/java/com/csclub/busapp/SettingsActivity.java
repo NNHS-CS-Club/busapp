@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.support.annotation.NonNull;
@@ -13,6 +14,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,9 +76,24 @@ public class SettingsActivity extends PreferenceActivity {
                         count += 1;
                     }
 
-                    ListPreference listPreference = (ListPreference) findPreference("userBusNumber");
+                    final ListPreference listPreference = (ListPreference) findPreference("userBusNumber");
                     listPreference.setEntries(buses);
                     listPreference.setEntryValues(buses);
+
+                    Preference.OnPreferenceChangeListener preferenceChangeListener = new Preference.OnPreferenceChangeListener() {
+                        @Override
+                        public boolean onPreferenceChange(Preference preference, Object o) {
+                            String userBusNumber = listPreference.getValue();
+                            FirebaseMessaging.getInstance().unsubscribeFromTopic(userBusNumber);
+
+                            String newBusNumber = o.toString();
+                            getPreferenceManager().getSharedPreferences().edit().putString("userBusNumber", newBusNumber).apply();
+                            FirebaseMessaging.getInstance().subscribeToTopic(newBusNumber);
+                            return true;
+                        }
+                    };
+
+                    listPreference.setOnPreferenceChangeListener(preferenceChangeListener);
                 }
 
                 @Override

@@ -2,11 +2,8 @@ package com.csclub.busapp;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -19,10 +16,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.google.firebase.messaging.FirebaseMessaging;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
@@ -30,87 +28,78 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private NavigationView navigationView;
 
-    private static final String CHANNEL_ID_1 = "Status Change";
-    private static final String CHANNEL_ID_2 = "Bus Change";
-
-    public boolean isConnectingToInternet(){
-        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED || connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
-            return true;
-        } else {
-            return false;
+    private void setupNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Status Change";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("0", name, importance);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+            name = "Bus Change";
+            channel = new NotificationChannel("1", name, importance);
+            notificationManager.createNotificationChannel((channel));
+            notificationManager.deleteNotificationChannel("fcm_fallback_notification_channel");
         }
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (isConnectingToInternet()) {
-            createNotificationChannels();
+        setupNotificationChannels();
 
-            FirebaseMessaging.getInstance().subscribeToTopic("pushNotifications");
-            localPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-            String userBusNumber = localPrefs.getString("userBusNumber", "-1");
+        localPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final String userBusNumber = localPrefs.getString("userBusNumber", "");
 
-            if (userBusNumber.equals("-1")) {
-                Set<String> preferences = new HashSet<String>();
-                preferences.add("CHANGES");
-                preferences.add("HERE");
-                preferences.add("LOADING");
-                preferences.add("GONE");
-                localPrefs.edit().putStringSet("notificationPreferences", preferences).apply();
-
-                Intent intent = new Intent(this, LoginActivity.class);
-                startActivity(intent);
-            } else {
-                setContentView(R.layout.activity_main);
-
-                drawer = findViewById(R.id.drawer_layout);
-                navigationView = findViewById(R.id.nav_view);
-                navigationView.setNavigationItemSelectedListener(this);
-
-                Toolbar toolbar = findViewById(R.id.toolbar);
-                toolbar.setTitle("Bus App");
-                setSupportActionBar(toolbar);
-
-                ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-                drawer.addDrawerListener(toggle);
-
-                navigationView.getMenu().getItem(0).setTitle("Naperville North High School");
-
-                toggle.syncState();
-                if (savedInstanceState == null) {
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new UserBusFragment()).commit();
-                    navigationView.setCheckedItem(R.id.nav_user_bus);
-                }
-            }
+        if (userBusNumber.equals("")) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
         } else {
-            setContentView(R.layout.activity_no_connection);
-        }
-    }
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference myRef = database.getReference("/buses/");
 
-    private void createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String description = "Text";
-            int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID_1, "Name", importance);
-            channel.setDescription(description);
-            channel.setVibrationPattern(new long[] { 0, 300, 200, 300 });
-            channel.setLockscreenVisibility(NotificationManager.IMPORTANCE_HIGH);
+            myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                 @Override
+                 public void onDataChange(DataSnapshot snapshot) {
+                     boolean found = false;
+                     for (DataSnapshot child : snapshot.getChildren()) {
+                        if (child.child("Bus").getValue().toString().equals(userBusNumber)) {
+                            found = true;
+                            break;
+                        }
+                     }
+                     if (!(found)) {
+                         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                         startActivity(intent);
+                     } else {
+                         setContentView(R.layout.activity_main);
 
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+                         drawer = findViewById(R.id.drawer_layout);
+                         navigationView = findViewById(R.id.nav_view);
+                         navigationView.setNavigationItemSelectedListener(MainActivity.this);
 
-            String description2 = "Text2";
-            int importance2 = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel2 = new NotificationChannel(CHANNEL_ID_2, "Name2", importance2);
-            channel2.setDescription(description2);
-            channel2.setVibrationPattern(new long[] { 0, 300, 200, 300 });
-            channel2.setLockscreenVisibility(NotificationManager.IMPORTANCE_HIGH);
+                         Toolbar toolbar = findViewById(R.id.toolbar);
+                         toolbar.setTitle("Bus App");
+                         setSupportActionBar(toolbar);
 
-            NotificationManager notificationManager2 = getSystemService(NotificationManager.class);
-            notificationManager2.createNotificationChannel(channel2);
+                         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(MainActivity.this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                         drawer.addDrawerListener(toggle);
+
+                         navigationView.getMenu().getItem(0).setTitle("Naperville North High School");
+
+                         toggle.syncState();
+                         if (savedInstanceState == null) {
+                             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new UserBusFragment()).commit();
+                             navigationView.setCheckedItem(R.id.nav_user_bus);
+                         }
+                     }
+                 }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
         }
     }
 

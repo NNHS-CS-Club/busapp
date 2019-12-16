@@ -45,7 +45,7 @@ public class UserBusFragment extends Fragment {
         height = size.y;
 
         SharedPreferences localPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        userBusNumber = localPrefs.getString("userBusNumber", "-1");
+        userBusNumber = localPrefs.getString("userBusNumber", "");
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("/buses/");

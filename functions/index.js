@@ -3,42 +3,68 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 exports.pushNotifications = functions.database.ref('/buses/').onUpdate((change, context) => {
+    var before = change.before.val();
     var after = change.after.val();
-    var topic = 'pushNotifications';
-    var jsonData = {};
+    var messages = [];
 
+    for (var i = 0; i < after.length; i++) {
+        var bus = String(after[i]["Bus"]);
+        var busChange = String(after[i]["Change"]);
+        var status = String(after[i]["Status"]);
+        var previousChange = String(before[i]["Change"]);
+        var previousStatus = String(before[i]["Status"]);
+        
+        var message = {
+            "notification": {
+                "title": "",
+                "body": ""
+            },
+            "android": {
+                "notification": {
+                    "icon": "ic_user_bus",
+                    "tag": "",
+                    "channel_id": ""
+                }
+            },
+            "apns": {
+                "headers": {
+                    "apns-collapse-id": ""
+                }
+            },
+            "topic": bus
+        }
 
-
-    for (var key in after) {
-        if (after.hasOwnProperty(key)) {
-            var busNumber = "";
-            var busChange = "";
-            var status = "";
-            if (after[key].hasOwnProperty("Bus")) {
-                busNumber = String(after[key]["Bus"]);
+        if (busChange === "") {
+            if (status !== "NOT HERE" && status !== previousStatus) {
+                message["notification"]["title"] = "Status Change"
+                message["notification"]["body"] = "Bus " + bus + " is " + status
+                message["android"]["notification"]["tag"] = "com.csclub.busapp.0"
+                message["android"]["notification"]["channel_id"] = "0"
+                message["apns"]["headers"]["apns-collapse-id"] = "0"
+                messages.push(message);
             }
-            if (after[key].hasOwnProperty("Change")) {
-                busChange = String(after[key]["Change"]);
+        } else {
+            if (busChange !== previousChange) {
+                message["notification"]["title"] = "Bus Change"
+                message["notification"]["body"] = "Bus " + bus + " is now Bus " + busChange
+                message["android"]["notification"]["tag"] = "com.csclub.busapp.1"
+                message["android"]["notification"]["channel_id"] = "1"
+                message["apns"]["headers"]["apns-collapse-id"] = "1"
+                messages.push(message);
             }
-            if (after[key].hasOwnProperty("Status")) {
-                status = String(after[key]["Status"]);
+            if (status !== "NOT HERE" && status !== previousStatus) {
+                message["notification"]["title"] = "Status Change"
+                message["notification"]["body"] = "Bus " + bus + " (" + busChange + ") is " + status
+                message["android"]["notification"]["tag"] = "com.csclub.busapp.0"
+                message["android"]["notification"]["channel_id"] = "0"
+                message["apns"]["headers"]["apns-collapse-id"] = "0"
+                messages.push(message);
             }
-
-            var bus = "";
-            if (busChange === "") {
-                bus = busNumber;
-            } else {
-                bus = busNumber + "=" + busChange;
-            }
-            jsonData[bus] = status;
         }
     }
 
-    var payload = {
-        data: jsonData,
-        topic: 'pushNotifications'
-    };
-
-    admin.messaging().send(payload).then(() => console.log("Sent Data")).catch((error) => console.log("Error"));
+    if (messages.length !== 0) {
+        return admin.messaging().sendAll(messages);
+    }
     return 0;
 });

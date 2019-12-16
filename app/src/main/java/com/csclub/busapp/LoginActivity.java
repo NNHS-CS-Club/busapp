@@ -22,6 +22,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,9 +135,16 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     ListView lw = ((AlertDialog)dialog).getListView();
                     try {
                         Object checkedItem = lw.getAdapter().getItem(lw.getCheckedItemPosition());
+                        String newBusNumber = checkedItem.toString();
 
                         SharedPreferences localPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                        localPrefs.edit().putString("userBusNumber", checkedItem.toString()).apply();
+                        String userBusNumber = localPrefs.getString("userBusNumber", "");
+                        if (!(userBusNumber.equals(""))) {
+                            FirebaseMessaging.getInstance().unsubscribeFromTopic(userBusNumber);
+                        }
+
+                        localPrefs.edit().putString("userBusNumber", newBusNumber).apply();
+                        FirebaseMessaging.getInstance().subscribeToTopic(newBusNumber);
 
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(intent);
