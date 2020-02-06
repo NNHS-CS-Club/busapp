@@ -1,13 +1,18 @@
 package com.csclub.busapp;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ImageSpan;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -35,6 +40,7 @@ public class AllBusesFragment extends Fragment {
 
     private Context context;
     private Toolbar toolbar;
+    private String userBusNumber;
     private TableLayout table;
 
     @Nullable
@@ -44,6 +50,8 @@ public class AllBusesFragment extends Fragment {
 
         context = getContext();
         toolbar = getActivity().findViewById(R.id.toolbar);
+        SharedPreferences localPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        userBusNumber = localPrefs.getString("userBusNumber", "");
         table = view.findViewById(R.id.table);
 
         Display display = getActivity().getWindowManager().getDefaultDisplay();
@@ -119,14 +127,14 @@ public class AllBusesFragment extends Fragment {
                     table.removeAllViews();
 
                     TableRow header = new TableRow(context);
-                    header.addView(makeTableCell("Bus", -1, context));
-                    header.addView(makeTableCell("Status", -2, context));
+                    header.addView(makeTableCell("Bus", -1, userBusNumber, context));
+                    header.addView(makeTableCell("Status", -2, userBusNumber, context));
                     table.addView(header);
 
                     for (int i = 0; i < buses.length; i++) {
                         TableRow tableRow = new TableRow(context);
-                        tableRow.addView(makeTableCell(buses[i], i * 2, context));
-                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, context));
+                        tableRow.addView(makeTableCell(buses[i], i * 2, userBusNumber, context));
+                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, userBusNumber, context));
                         table.addView(tableRow);
                     }
                 }
@@ -142,10 +150,16 @@ public class AllBusesFragment extends Fragment {
         return view;
     }
 
-    private static TextView makeTableCell(String text, int id, Context context) {
+    private static TextView makeTableCell(String text, int id, String userBusNumber, Context context) {
         TextView textView = new TextView(context);
         textView.setId(id);
-        textView.setText(text);
+        if (text.equals(userBusNumber)) {
+            SpannableStringBuilder ssb = new SpannableStringBuilder("  " + userBusNumber);
+            ssb.setSpan(new ImageSpan(context, R.drawable.checkmark), 0, 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+            textView.setText(ssb, TextView.BufferType.SPANNABLE);
+        } else {
+            textView.setText(text);
+        }
         textView.setTextSize(25);
         textView.setTypeface(textView.getTypeface(), Typeface.BOLD);
         textView.setLayoutParams(new TableRow.LayoutParams(width / 2, height / 9));
