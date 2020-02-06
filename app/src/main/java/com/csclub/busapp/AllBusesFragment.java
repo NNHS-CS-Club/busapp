@@ -1,14 +1,17 @@
 package com.csclub.busapp;
 
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -127,14 +130,14 @@ public class AllBusesFragment extends Fragment {
                     table.removeAllViews();
 
                     TableRow header = new TableRow(context);
-                    header.addView(makeTableCell("Bus", -1, userBusNumber, context));
-                    header.addView(makeTableCell("Status", -2, userBusNumber, context));
+                    header.addView(makeTableCell("Bus", -1, userBusNumber, context, getResources()));
+                    header.addView(makeTableCell("Status", -2, userBusNumber, context, getResources()));
                     table.addView(header);
 
                     for (int i = 0; i < buses.length; i++) {
                         TableRow tableRow = new TableRow(context);
-                        tableRow.addView(makeTableCell(buses[i], i * 2, userBusNumber, context));
-                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, userBusNumber, context));
+                        tableRow.addView(makeTableCell(buses[i], i * 2, userBusNumber, context, getResources()));
+                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, userBusNumber, context, getResources()));
                         table.addView(tableRow);
                     }
                 }
@@ -150,13 +153,20 @@ public class AllBusesFragment extends Fragment {
         return view;
     }
 
-    private static TextView makeTableCell(String text, int id, String userBusNumber, Context context) {
+    private static TextView makeTableCell(String text, int id, String userBusNumber, Context context, Resources resources) {
         TextView textView = new TextView(context);
         textView.setId(id);
         if (text.equals(userBusNumber)) {
-            SpannableStringBuilder ssb = new SpannableStringBuilder("  " + userBusNumber);
-            ssb.setSpan(new ImageSpan(context, R.drawable.checkmark), 0, 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-            textView.setText(ssb, TextView.BufferType.SPANNABLE);
+//            SpannableStringBuilder ssb = new SpannableStringBuilder("  " + userBusNumber);
+//            ssb.setSpan(new ImageSpan(context, R.drawable.checkmark), 0, 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+//            textView.setText(ssb, TextView.BufferType.SPANNABLE);
+            textView.setText(text);
+            Drawable drawable = ResourcesCompat.getDrawable(resources, R.drawable.checkmark, null);
+            int left = (int) (width / 4 - drawable.getMinimumWidth() * 1.5);
+            int right = (int) (left + drawable.getMinimumWidth());
+            drawable.setBounds(left, 0, right,
+                    drawable.getMinimumHeight());
+            textView.setCompoundDrawables(drawable, null, null, null);
         } else {
             textView.setText(text);
         }

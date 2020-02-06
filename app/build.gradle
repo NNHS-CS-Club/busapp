@@ -6,8 +6,8 @@ android {
         applicationId "com.csclub.busapp"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 6
-        versionName "6.0"
+        versionCode 7
+        versionName "7.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
