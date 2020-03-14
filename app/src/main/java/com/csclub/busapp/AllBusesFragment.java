@@ -41,7 +41,6 @@ public class AllBusesFragment extends Fragment {
     private static int width;
     private static int height;
 
-    private Context context;
     private Toolbar toolbar;
     private String userBusNumber;
     private TableLayout table;
@@ -51,7 +50,6 @@ public class AllBusesFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_all_buses, container, false);
 
-        context = getContext();
         toolbar = getActivity().findViewById(R.id.toolbar);
         SharedPreferences localPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         userBusNumber = localPrefs.getString("userBusNumber", "");
@@ -114,7 +112,9 @@ public class AllBusesFragment extends Fragment {
                     buses[i] = busNumber;
                 }
 
-                toolbar.setTitle("All Buses");
+                if (toolbar != null) {
+                    toolbar.setTitle("All Buses");
+                }
 
                 try {
                     for (int i = 0; i < dataLength; i++) {
@@ -129,15 +129,15 @@ public class AllBusesFragment extends Fragment {
                 } catch (Exception e){
                     table.removeAllViews();
 
-                    TableRow header = new TableRow(context);
-                    header.addView(makeTableCell("Bus", -1, userBusNumber, context, getResources()));
-                    header.addView(makeTableCell("Status", -2, userBusNumber, context, getResources()));
+                    TableRow header = new TableRow(getContext());
+                    header.addView(makeTableCell("Bus", -1, userBusNumber));
+                    header.addView(makeTableCell("Status", -2, userBusNumber));
                     table.addView(header);
 
                     for (int i = 0; i < buses.length; i++) {
-                        TableRow tableRow = new TableRow(context);
-                        tableRow.addView(makeTableCell(buses[i], i * 2, userBusNumber, context, getResources()));
-                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, userBusNumber, context, getResources()));
+                        TableRow tableRow = new TableRow(getContext());
+                        tableRow.addView(makeTableCell(buses[i], i * 2, userBusNumber));
+                        tableRow.addView(makeTableCell(statuses[i], i * 2 + 1, userBusNumber));
                         table.addView(tableRow);
                     }
                 }
@@ -153,15 +153,15 @@ public class AllBusesFragment extends Fragment {
         return view;
     }
 
-    private static TextView makeTableCell(String text, int id, String userBusNumber, Context context, Resources resources) {
-        TextView textView = new TextView(context);
+    private TextView makeTableCell(String text, int id, String userBusNumber) {
+        TextView textView = new TextView(getContext());
         textView.setId(id);
         if (text.equals(userBusNumber)) {
 //            SpannableStringBuilder ssb = new SpannableStringBuilder("  " + userBusNumber);
 //            ssb.setSpan(new ImageSpan(context, R.drawable.checkmark), 0, 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
 //            textView.setText(ssb, TextView.BufferType.SPANNABLE);
             textView.setText(text);
-            Drawable drawable = ResourcesCompat.getDrawable(resources, R.drawable.checkmark, null);
+            Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.checkmark, null);
             int left = (int) (width / 4 - drawable.getMinimumWidth() * 1.5);
             int right = (int) (left + drawable.getMinimumWidth());
             drawable.setBounds(left, 0, right,
